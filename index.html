@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Management System | College Academic Prototype</title>
+  <meta name="description" content="A modern, responsive, and interactive College Library Management System with real-time inventory tracking, student issue/return workflows, and overdue alerts.">
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Main Container -->
+  <div class="app-container">
+
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-badge">
+          <span class="logo-icon">📖</span>
+        </div>
+        <div>
+          <h1 class="app-title">Library Management System</h1>
+          <p class="app-subtitle">College Central Library &bull; Book Catalog, Circulation &amp; Overdue Registry</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="date-badge" id="currentDateBadge">
+          <span class="calendar-icon">📅</span>
+          <span id="headerTodayDate">Today</span>
+        </div>
+        <button id="btnOpenAddBookModal" class="btn btn-primary" aria-label="Add new book to library">
+          <span class="btn-icon">➕</span>
+          <span>Add New Book</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- KPI Metrics Dashboard -->
+      <section class="dashboard-section" aria-label="Library Dashboard Overview">
+        <div class="kpi-grid">
+          
+          <!-- Total Books KPI -->
+          <div class="kpi-card card-total">
+            <div class="kpi-header">
+              <span class="kpi-label">Total Books</span>
+              <div class="kpi-icon-wrapper icon-total">📚</div>
+            </div>
+            <div class="kpi-value" id="kpiTotalTitles">0</div>
+            <div class="kpi-subtext" id="kpiTotalCopiesSubtext">0 total physical copies</div>
+          </div>
+
+          <!-- Available Books KPI -->
+          <div class="kpi-card card-available">
+            <div class="kpi-header">
+              <span class="kpi-label">Available Copies</span>
+              <div class="kpi-icon-wrapper icon-available">📗</div>
+            </div>
+            <div class="kpi-value" id="kpiAvailableCopies">0</div>
+            <div class="kpi-subtext">On shelf &amp; ready to issue</div>
+          </div>
+
+          <!-- Issued Books KPI -->
+          <div class="kpi-card card-issued">
+            <div class="kpi-header">
+              <span class="kpi-label">Issued Copies</span>
+              <div class="kpi-icon-wrapper icon-issued">📙</div>
+            </div>
+            <div class="kpi-value" id="kpiIssuedCopies">0</div>
+            <div class="kpi-subtext">Borrowed by students</div>
+          </div>
+
+          <!-- Overdue Books KPI -->
+          <div class="kpi-card card-overdue">
+            <div class="kpi-header">
+              <span class="kpi-label">Overdue Alerts</span>
+              <div class="kpi-icon-wrapper icon-overdue">🚨</div>
+            </div>
+            <div class="kpi-value" id="kpiOverdueCopies">0</div>
+            <div class="kpi-subtext">Past expected return date</div>
+          </div>
+
+        </div>
+
+        <!-- Circulation Rate Banner -->
+        <div class="circulation-card">
+          <div class="circulation-info">
+            <div class="circulation-title-wrap">
+              <span class="circulation-emoji">📊</span>
+              <h2 class="circulation-heading">Library Circulation &amp; Utilization Rate</h2>
+            </div>
+            <div class="circulation-stats">
+              <span class="circulation-percent" id="circulationRateText">0%</span>
+              <span class="circulation-ratio" id="circulationRatioText">(0 of 0 copies currently in circulation)</span>
+            </div>
+          </div>
+          <div class="circulation-bar-track">
+            <div class="circulation-bar-fill" id="circulationBarFill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Navigation Tabs & View Switcher -->
+      <section class="views-tabs-section">
+        <div class="tab-buttons">
+          <button class="tab-btn active" id="tabCatalogBtn" data-tab="catalog">
+            <span>📚</span> Book Catalog &amp; Inventory (<span id="tabCatalogCount">0</span>)
+          </button>
+          <button class="tab-btn" id="tabLoansBtn" data-tab="loans">
+            <span>🎓</span> Active Student Loans (<span id="tabLoansCount">0</span>)
+            <span class="badge-tab-overdue" id="tabOverdueBadge" style="display: none;">0 Overdue</span>
+          </button>
+        </div>
+
+        <div class="tab-quick-actions">
+          <button id="btnLoadSample" class="btn btn-outline" title="Load sample academic books and loans">
+            <span>✨</span> Load Sample Books
+          </button>
+          <button id="btnClearData" class="btn btn-outline-danger" title="Clear all books and issue records">
+            <span>🗑️</span> Reset Demo Data
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB 1: CATALOG VIEW -->
+      <section class="tab-view-content active" id="catalogView">
+        
+        <!-- Controls & Filters Section -->
+        <div class="controls-panel">
+          
+          <div class="controls-row-top">
+            <!-- Search Bar -->
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input 
+                type="text" 
+                id="searchInput" 
+                class="search-input" 
+                placeholder="Search catalog by Book Title, Author name, or ISBN..."
+                autocomplete="off"
+              >
+              <button id="btnClearSearch" class="btn-clear-search" title="Clear search query" aria-label="Clear search" style="display: none;">✕</button>
+            </div>
+          </div>
+
+          <!-- Filters Row -->
+          <div class="filters-row">
+            
+            <!-- Category Filter -->
+            <div class="filter-group">
+              <label for="filterCategory" class="filter-label">Category:</label>
+              <select id="filterCategory" class="form-select">
+                <option value="all">All Categories</option>
+                <!-- Populated dynamically via JS -->
+              </select>
+            </div>
+
+            <!-- Availability Filter -->
+            <div class="filter-group">
+              <label for="filterAvailability" class="filter-label">Availability:</label>
+              <select id="filterAvailability" class="form-select">
+                <option value="all">All Statuses</option>
+                <option value="available">Available Copies (>0)</option>
+                <option value="outOfStock">Out of Stock (0 Available)</option>
+                <option value="issued">Currently on Loan</option>
+                <option value="overdue">Contains Overdue Loans (⚠️)</option>
+              </select>
+            </div>
+
+            <!-- Sort By -->
+            <div class="filter-group">
+              <label for="catalogSortBy" class="filter-label">Sort By:</label>
+              <select id="catalogSortBy" class="form-select">
+                <option value="titleAsc">Title (A - Z)</option>
+                <option value="authorAsc">Author (A - Z)</option>
+                <option value="availableDesc">Available Copies (High to Low)</option>
+                <option value="copiesDesc">Total Copies (High to Low)</option>
+              </select>
+            </div>
+
+            <!-- Reset Filters -->
+            <button id="btnResetFilters" class="btn-reset-filters" title="Reset all search and filter dropdowns">
+              Reset Filters
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- Catalog Header & Records Indicator -->
+        <div class="catalog-header-bar">
+          <div class="catalog-count-wrap">
+            <h2 class="section-title">Catalog Inventory</h2>
+            <span class="count-pill" id="catalogCountBadge">Showing 0 books</span>
+          </div>
+
+          <div class="catalog-legends">
+            <span class="legend-item"><span class="legend-dot dot-available"></span> In Stock</span>
+            <span class="legend-item"><span class="legend-dot dot-empty"></span> Out of Stock</span>
+            <span class="legend-item"><span class="legend-dot dot-overdue"></span> Has Overdue</span>
+          </div>
+        </div>
+
+        <!-- Books Grid / Table Container -->
+        <div class="books-grid" id="booksGrid">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Empty State for Catalog -->
+        <div class="empty-state" id="catalogEmptyState" style="display: none;">
+          <div class="empty-icon">📚</div>
+          <h3 class="empty-title" id="catalogEmptyTitle">No Books in Library Catalog</h3>
+          <p class="empty-description" id="catalogEmptyDesc">Add a new book record or click "Load Sample Books" to view demonstration records.</p>
+          <div class="empty-actions">
+            <button id="btnEmptyAddBook" class="btn btn-primary">➕ Add First Book</button>
+            <button id="btnEmptyLoadSample" class="btn btn-outline">✨ Load Sample Books</button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- TAB 2: ACTIVE LOANS & OVERDUE REGISTRY VIEW -->
+      <section class="tab-view-content" id="loansView">
+        
+        <div class="loans-header-bar">
+          <div>
+            <h2 class="section-title">Active Student Book Loans &amp; Circulation</h2>
+            <p class="section-subtitle">Real-time borrower tracking, issue dates, expected returns, and overdue penalty flags.</p>
+          </div>
+          <div class="loans-filters-quick">
+            <label for="filterLoanStatus" class="filter-label">Filter Loans:</label>
+            <select id="filterLoanStatus" class="form-select">
+              <option value="all">All Active Loans</option>
+              <option value="overdue">Overdue Loans Only (⚠️)</option>
+              <option value="ontime">Within Due Date</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Loans Table Container -->
+        <div class="table-card">
+          <div class="table-responsive">
+            <table class="data-table" id="loansTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Student Name</th>
+                  <th>Roll Number</th>
+                  <th>Book Title &amp; ISBN</th>
+                  <th>Issue Date</th>
+                  <th>Expected Return</th>
+                  <th>Status &amp; Days</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="loansTableBody">
+                <!-- Populated via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty Loans State -->
+          <div class="empty-state" id="loansEmptyState" style="display: none;">
+            <div class="empty-icon">🎓</div>
+            <h3 class="empty-title">No Active Book Loans</h3>
+            <p class="empty-description">All books are currently returned and available on the library shelves.</p>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p><strong>Library Management System</strong> &bull; College Mini-Project Demonstration</p>
+        <p class="footer-sub">HTML5 Semantic Design, Modern Vanilla CSS3, ES6 JavaScript &amp; HTML5 LocalStorage</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 1: ADD / EDIT BOOK RECORD
+       ========================================================================== -->
+  <div class="modal-backdrop" id="bookModal" aria-hidden="true" role="dialog" aria-labelledby="bookModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon" id="bookModalIcon">📖</span>
+          <h3 class="modal-title" id="bookModalTitle">Add New Book Record</h3>
+        </div>
+        <button class="modal-close-btn" id="btnCloseBookModal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="bookForm" class="modal-form" novalidate>
+        <input type="hidden" id="bookIdInput">
+
+        <!-- Title -->
+        <div class="form-field">
+          <label for="bookTitleInput" class="form-label">
+            Book Title <span class="required-star">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="bookTitleInput" 
+            class="form-input" 
+            placeholder="e.g. Introduction to Algorithms (CLRS)" 
+            maxlength="150"
+            required
+          >
+          <div class="form-error" id="bookTitleError">Please enter a valid book title (at least 2 characters).</div>
+        </div>
+
+        <!-- Author -->
+        <div class="form-field">
+          <label for="bookAuthorInput" class="form-label">
+            Author(s) <span class="required-star">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="bookAuthorInput" 
+            class="form-input" 
+            placeholder="e.g. Thomas H. Cormen, Charles E. Leiserson" 
+            maxlength="120"
+            required
+          >
+          <div class="form-error" id="bookAuthorError">Please enter author name(s).</div>
+        </div>
+
+        <!-- ISBN & Category Row -->
+        <div class="form-row-2">
+          
+          <!-- ISBN -->
+          <div class="form-field">
+            <label for="bookIsbnInput" class="form-label">
+              ISBN Number <span class="required-star">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="bookIsbnInput" 
+              class="form-input" 
+              placeholder="e.g. 978-0262033848" 
+              maxlength="30"
+              required
+            >
+            <div class="form-error" id="bookIsbnError">Please enter a valid ISBN code (at least 6 characters).</div>
+          </div>
+
+          <!-- Category -->
+          <div class="form-field">
+            <label for="bookCategoryInput" class="form-label">
+              Academic Category <span class="required-star">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="bookCategoryInput" 
+              class="form-input" 
+              list="commonCategoryList"
+              placeholder="e.g. Computer Science" 
+              maxlength="50"
+              required
+            >
+            <datalist id="commonCategoryList">
+              <option value="Computer Science">
+              <option value="Information Technology">
+              <option value="Electronics &amp; Communication">
+              <option value="Electrical Engineering">
+              <option value="Mechanical Engineering">
+              <option value="Civil Engineering">
+              <option value="Mathematics">
+              <option value="Physics">
+              <option value="Management &amp; Business">
+              <option value="General Reference">
+            </datalist>
+            <div class="form-error" id="bookCategoryError">Please enter or choose a category.</div>
+          </div>
+
+        </div>
+
+        <!-- Copies Row -->
+        <div class="form-row-2">
+          
+          <!-- Total Copies -->
+          <div class="form-field">
+            <label for="bookCopiesInput" class="form-label">
+              Total Physical Copies <span class="required-star">*</span>
+            </label>
+            <input 
+              type="number" 
+              id="bookCopiesInput" 
+              class="form-input" 
+              min="1" 
+              max="100" 
+              value="3"
+              required
+            >
+            <div class="form-error" id="bookCopiesError">Must have at least 1 copy (and not less than currently issued copies).</div>
+          </div>
+
+          <!-- Available Copies Display (Read-Only Hint) -->
+          <div class="form-field" id="availableHintWrapper" style="display: none;">
+            <label class="form-label">Currently Issued</label>
+            <div class="info-read-box">
+              <span id="editCurrentlyIssuedText">0 copies issued</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Form Actions -->
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelBookModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitBook">
+            <span id="submitBookBtnText">Save Book Record</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: ISSUE BOOK TO STUDENT
+       ========================================================================== -->
+  <div class="modal-backdrop" id="issueModal" aria-hidden="true" role="dialog" aria-labelledby="issueModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📤</span>
+          <h3 class="modal-title" id="issueModalTitle">Issue Book to Student</h3>
+        </div>
+        <button class="modal-close-btn" id="btnCloseIssueModal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="issueForm" class="modal-form" novalidate>
+        <input type="hidden" id="issueBookIdInput">
+
+        <!-- Selected Book Details Summary Card -->
+        <div class="selected-book-summary">
+          <div class="summary-book-title" id="issueSummaryTitle">Book Title</div>
+          <div class="summary-meta">
+            <span>Author: <strong id="issueSummaryAuthor">Author</strong></span> &bull; 
+            <span>ISBN: <strong id="issueSummaryIsbn">ISBN</strong></span>
+          </div>
+          <div class="summary-stock">
+            Available Copies: <span class="badge-stock" id="issueSummaryAvailable">0</span>
+          </div>
+        </div>
+
+        <!-- Out of Stock Warning Banner (Feature #9) -->
+        <div class="alert-banner alert-banner-danger" id="outOfStockAlert" style="display: none;">
+          ⚠️ <strong>Cannot Issue Book:</strong> No copies are currently available in the library stock. Please wait until an issued copy is returned.
+        </div>
+
+        <!-- Student Name -->
+        <div class="form-field">
+          <label for="studentNameInput" class="form-label">
+            Student Full Name <span class="required-star">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="studentNameInput" 
+            class="form-input" 
+            placeholder="e.g. Priya Sharma" 
+            maxlength="80"
+            required
+          >
+          <div class="form-error" id="studentNameError">Please enter the student's name (at least 2 letters).</div>
+        </div>
+
+        <!-- Student Roll Number -->
+        <div class="form-field">
+          <label for="studentRollInput" class="form-label">
+            College Roll Number / Student ID <span class="required-star">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="studentRollInput" 
+            class="form-input" 
+            placeholder="e.g. 21CS045" 
+            maxlength="30"
+            required
+          >
+          <div class="form-error" id="studentRollError">Please enter a valid roll number / student ID.</div>
+        </div>
+
+        <!-- Issue Date & Return Date -->
+        <div class="form-row-2">
+          
+          <!-- Issue Date -->
+          <div class="form-field">
+            <label for="issueDateInput" class="form-label">
+              Issue Date <span class="required-star">*</span>
+            </label>
+            <input 
+              type="date" 
+              id="issueDateInput" 
+              class="form-input" 
+              required
+            >
+            <div class="form-error" id="issueDateError">Please choose a valid issue date.</div>
+          </div>
+
+          <!-- Expected Return Date -->
+          <div class="form-field">
+            <label for="returnDateInput" class="form-label">
+              Expected Return Date <span class="required-star">*</span>
+            </label>
+            <input 
+              type="date" 
+              id="returnDateInput" 
+              class="form-input" 
+              required
+            >
+            <div class="form-error" id="returnDateError">Return date must be on or after issue date.</div>
+          </div>
+
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelIssueModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitIssue">
+            <span>Confirm Issue</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: VIEW & RETURN BOOK COPIES
+       ========================================================================== -->
+  <div class="modal-backdrop" id="viewLoansModal" aria-hidden="true" role="dialog" aria-labelledby="viewLoansTitle">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">📋</span>
+          <h3 class="modal-title" id="viewLoansTitle">Active Loans for Book</h3>
+        </div>
+        <button class="modal-close-btn" id="btnCloseViewLoansModal" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="modal-body-scrollable">
+        <div class="book-loan-details-header">
+          <h4 id="viewLoansBookTitle" class="view-loans-title">Book Title</h4>
+          <p id="viewLoansBookMeta" class="view-loans-meta">Author &bull; ISBN</p>
+        </div>
+
+        <div id="viewLoansListContainer" class="loans-cards-list">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="btnCloseViewLoansFooter">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 4: CONFIRMATION DIALOG (Delete / Reset)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="confirmModal" aria-hidden="true" role="dialog" aria-labelledby="confirmTitle">
+    <div class="modal-card modal-card-sm">
+      <div class="confirm-content">
+        <div class="confirm-icon" id="confirmIcon">⚠️</div>
+        <h3 class="confirm-title" id="confirmTitle">Confirm Action</h3>
+        <p class="confirm-message" id="confirmMessage">Are you sure you want to proceed?</p>
+        
+        <div class="confirm-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelConfirm">Cancel</button>
+          <button type="button" class="btn btn-danger" id="btnProceedConfirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>
